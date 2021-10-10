@@ -3,7 +3,7 @@ package com.example;
 import java.io.*;
 import java.net.*;
 
-public class Server {
+public class Server extends Thread{
     
     ServerSocket server = null;
     Socket client = null;
@@ -12,58 +12,80 @@ public class Server {
     BufferedReader inDalClient;
     DataOutputStream outVersoClient;
 
-    public Socket attendi(){
+    public Server(Socket socket){
 
-        try {
-            
-            System.out.println("Il SERVER è entrato in esecuzione");
-            //creo un server  sulla porta 5000
-            server = new ServerSocket(5000);
-            //rimane in attesa di un client
-            client = server.accept();
-            //chiudo il server por inibire altri client, anche se non si chiude quasi mai
-            server.close();
-            //associo due oggetti al socket del client per effettuare la scrittura e la lettura
-            inDalClient = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            outVersoClient = new DataOutputStream(client.getOutputStream());
-
-        } catch (Exception e) {
-            
-            System.out.println(e.getMessage());
-            System.out.println("Errore durante l'istanza del server!");
-            System.exit(1);
-        }
-
-        return client;
+        this.client = socket;
     }
 
-    public void comunica(){
+    public void run(){
 
         try {
             
-            //rimango in attesa dell stringa trasmessa dal client
-            System.out.println("Benvenuto client, scrivi una frase e la trasformo in maiuscolo. Attendo...");
+            comunica();
+
+        } catch (Exception e) {
+            e.printStackTrace(System.out);
+        }
+    }
+
+    public void comunica() throws Exception{
+
+        inDalClient = new BufferedReader(new InputStreamReader(client.getInputStream()));
+        outVersoClient = new DataOutputStream(client.getOutputStream());
+
+        for(;;){
+
             stringaRicevuta = inDalClient.readLine();
-            System.out.println("Stringa ricevuta dal client: " + stringaRicevuta);
-            //la modifico e la rimando al client
-            stringaModificata = stringaRicevuta.toUpperCase();
-            System.out.println("Invio la stringa modifica al client");
-            outVersoClient.writeBytes(stringaModificata + '\n');
-            //termina l'elaborazione sul serve: chiudo la connessione dal client
-            System.out.println("SERVER: fine elaborazione...PASSO E CHIUDO!");
-            client.close();
 
-        } catch (Exception e) {
+            if(stringaRicevuta == null || stringaRicevuta.equals("FINE")){
+
+                outVersoClient.writeBytes(stringaRicevuta + "Server in chiusura...\n");
+                System.out.println("Echo sul sever in chiusura: " + stringaRicevuta);
+                break;
+            }else{
+
+                outVersoClient.writeBytes(stringaRicevuta + "Ricevuta e trasmessa\n");
+                System.out.println("echo sul server: " + stringaRicevuta);
+            }
+
+        }
+
+        outVersoClient.close();
+        inDalClient.close();
+        System.out.println("Chiusura del socket");
+        client.close();
+    }
+
+    public class MultiServer{
+
+        public void start(){
+
+            try {
+                
+                ServerSocket serverSocket = new ServerSocket(5000);
+                for(;;){
+
+                    System.out.println("Server in attesa...");
+                    Socket socket = serverSocket.accept();
+                    System.out.println("Server socket " + socket);
+                    Server serverThread = new Server(socket);
+                    serverThread.start();
+
+                }
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                System.out.println("Errore durante l'istanza del server !");
+                System.exit(1);
+            }
+        }
+
+        public void main(String[] args){
+
+            MultiServer tcpServer = new MultiServer();
+            tcpServer.start();
             
         }
     }
-
-    public static void main( String[] args ) throws IOException
-    {
-
-        Server server = new Server();
-        server.attendi();
-        server.comunica();
-    }
+ 
 
 }

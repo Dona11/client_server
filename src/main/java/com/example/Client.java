@@ -46,26 +46,34 @@ public class Client {
 
     public void comunica(){
 
-        try {
-            //leggo la riga da inviare al server
-            System.out.println("Inserisci la stringa da trasmettere al server" + '\n');
+        for(;;){
+
+            try {
+                
+            System.out.println("Inserisci la stringa da trasmettere al server: ");
             stringaUtente = tastiera.readLine();
-            //invio la riga al server e poi attendo
-            System.out.println("Invio la riga al server e attendo...");
-            outVersoServer.writeBytes(stringaUtente + '\n');
+            //la spedisco al server
+            System.out.println("Invio la stringa al server e attendo...");
+            outVersoServer.writeBytes(stringaUtente + "\n");
             //leggo la risposta dal server
             stringaRicevutaDalServer = inDalServer.readLine();
-            System.out.println("Ecco la risposta del server: " + stringaRicevutaDalServer + '\n');
-            //chiudo la connessione
-            System.out.println("Elaborazione finita, chiusura connessione...");
-            mioSocket.close();
-
-
-        } catch (Exception e) {
+            System.out.println("Risposta del server: " + stringaRicevutaDalServer);
             
-            System.out.println(e.getMessage());
-            System.out.println("Errore durante la connessione");
-            System.exit(1);
+            if(stringaUtente.equals("FINE")){
+
+                System.out.println("Il Client termina la sua elaborazione e chiude la connessione");
+                mioSocket.close();
+                break;
+            }
+
+
+            } catch (Exception e) {
+                
+                System.out.println(e.getMessage());
+                System.out.println("Errore durante la connessione col server");
+                System.exit(1);
+            }
+
         }
         
     }
